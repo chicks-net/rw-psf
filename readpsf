@@ -137,7 +137,14 @@ $CONFIG{output_format} = lc $ARGV[1];
 
 ### Read PSF file in #################################################
 
-open PSFFILE, '<:raw', $CONFIG{psf_filename} or die "$CONFIG{psf_filename}: $!\n";
+my $psf_filename_to_open;
+if ( $CONFIG{psf_filename} =~ /\.gz$/ ) {
+	$psf_filename_to_open = 'zcat ' . $CONFIG{psf_filename} . ' |';
+} else {
+	$psf_filename_to_open = '<' . $CONFIG{psf_filename};
+}
+open PSFFILE, $psf_filename_to_open or die "$CONFIG{psf_filename}: $!\n";
+binmode(PSFFILE);
 print "Reading '$CONFIG{psf_filename}'...\n";
 
 ### Read header
@@ -248,6 +255,7 @@ close PSFFILE;
 if ($CONFIG{output_format} eq 'txt') {
 
     my $txt_filename = $CONFIG{psf_filename};
+    $txt_filename =~ s{^/.*/}{./}; # absolute paths become pwd
     $txt_filename =~ s/\.psfu?$//i;
     $txt_filename .= ".$CONFIG{width}x$CONFIG{height}.txt";
 
@@ -318,6 +326,7 @@ my $image = [];
 ### Write BMP image
 {
     my $bmp_filename = $CONFIG{psf_filename};
+    $bmp_filename =~ s{^/.*/}{./}; # absolute paths become pwd
     $bmp_filename =~ s/\.psfu?$//i;
     $bmp_filename .= ".$CONFIG{width}x$CONFIG{height}.bmp";
     save_BMP($bmp_filename, $image);
